@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+    <title>Dashboard</title>
+</head>
+<body>
+    <header>
+        <h1>📊 Дэшборд проекта</h1>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <h2>👥 Пользователи</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.username }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <section class="card">
+            <h2>💰 Совместные траты</h2>
+            <p class="stat">{{ expenses }}</p>
+        </section>
+
+        <section class="card">
+            <h2>📄 Количество данных в тратах</h2>
+            <p class="stat">{{ expense_counts }}</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2025 SmartBudget</p>
+    </footer>
+</body>
+</html>
