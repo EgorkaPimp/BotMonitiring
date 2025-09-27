@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
 from dotenv import load_dotenv
 import os
