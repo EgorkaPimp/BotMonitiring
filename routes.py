@@ -8,7 +8,7 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 
-@router.get("/dashboard", response_class=HTMLResponse)
+@router.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request, username: str = Depends(authenticate)):
     users = await get_active_users()
     expenses = await get_expenses()
