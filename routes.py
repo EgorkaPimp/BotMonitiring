@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from db import get_active_users, get_expenses, get_expense_counts
+from db import get_active_users, get_expenses, get_expense_counts, get_wish, del_wish
 from auth import authenticate
 
 router = APIRouter()
@@ -13,6 +13,7 @@ async def dashboard(request: Request, username: str = Depends(authenticate)):
     users = await get_active_users()
     expenses = await get_expenses()
     expense_counts = await get_expense_counts()
+    wishes = await get_wish()
 
     return templates.TemplateResponse(
         "dashboard.html",
@@ -21,6 +22,14 @@ async def dashboard(request: Request, username: str = Depends(authenticate)):
             "users": users,
             "expenses": expenses,
             "expense_counts": expense_counts,
-            "username": username
+            "username": username,
+            "wishes": wishes
         }
     )
+
+@router.delete("/wishes/{wish_id}")
+async def delete_wish(wish_id: int):
+    result = await del_wish(wish_id=wish_id)
+    if result:
+        return result
+    raise HTTPException(status_code=404, detail="Wish not found")

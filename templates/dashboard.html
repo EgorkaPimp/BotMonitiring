@@ -3,8 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="static/style.css?v=2">
     <title>Dashboard</title>
+    <style>
+        .toggle-btn {
+            cursor: pointer;
+            color: #007bff;
+            font-size: 14px;
+            border: none;
+            background: none;
+            padding: 0;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -12,9 +25,16 @@
     </header>
 
     <main class="container">
+        <!-- Пользователи -->
         <section class="card">
-            <h2>👥 Пользователи</h2>
-            <table>
+            <h2>
+                👥 Пользователи 
+                <button class="toggle-btn" id="toggle-users">⬇️</button>
+            </h2>
+            
+            <p id="user-count" class="stat hidden">{{ users|length }}</p>
+            
+            <table id="user-table">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -32,19 +52,85 @@
             </table>
         </section>
 
+        <!-- Совместные траты -->
         <section class="card">
             <h2>💰 Совместные траты</h2>
             <p class="stat">{{ expenses }}</p>
         </section>
 
+        <!-- Количество данных -->
         <section class="card">
             <h2>📄 Количество данных в тратах</h2>
             <p class="stat">{{ expense_counts }}</p>
+        </section>
+
+        <!-- Пожелания пользователей -->
+        <section class="card">
+            <h2>💡 Пожелания пользователей</h2>
+            <div class="wishes-list">
+                {% for wish in wishes %}
+                <div class="wish-item" data-id="{{ wish.id }}">
+                    <p class="wish-user"> #{{ wish.id }}</p>
+                    <p class="wish-user">👤 Пользователь #{{ wish.user_id }}</p>
+                    <p class="wish-text">{{ wish.comment }}</p>
+                    <button class="delete-btn">🗑 Выполнено</button>
+                </div>
+                {% endfor %}
+            </div>
         </section>
     </main>
 
     <footer>
         <p>© 2025 SmartBudget</p>
     </footer>
+
+    <script>
+        const toggleBtn = document.getElementById("toggle-users");
+        const userTable = document.getElementById("user-table");
+        const userCount = document.getElementById("user-count");
+
+        toggleBtn.addEventListener("click", () => {
+            if (userTable.classList.contains("hidden")) {
+                userTable.classList.remove("hidden");
+                userCount.classList.add("hidden");
+                toggleBtn.textContent = "⬇️"; // таблица открыта
+            } else {
+                userTable.classList.add("hidden");
+                userCount.classList.remove("hidden");
+                toggleBtn.textContent = "▶️"; // таблица свернута
+            }
+        });
+    </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const deleteButtons = document.querySelectorAll(".delete-btn");
+
+        deleteButtons.forEach(button => {
+            button.addEventListener("click", async () => {
+                const wishItem = button.closest(".wish-item");
+                const wishId = wishItem.dataset.id; // Получаем wish.id
+
+                if (!wishId) return console.error("Wish ID not found!");
+
+                try {
+                    const response = await fetch(`/wishes/${wishId}`, {
+                        method: "DELETE"
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        wishItem.remove(); // удаляем элемент из DOM
+                        console.log("Пожелание удалено", result);
+                    } else {
+                        console.error("Ошибка удаления:", result.detail || result);
+                    }
+                } catch (error) {
+                    console.error("Ошибка запроса:", error);
+                }
+            });
+        });
+    });
+    </script>
 </body>
 </html>

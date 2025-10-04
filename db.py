@@ -47,3 +47,29 @@ async def get_expense_counts():
     except Exception as e:
         print("DB ERROR:", e)
         return 0
+
+async def get_wish():
+    try:
+        async with engine.connect() as conn:
+            result = await conn.execute(text("SELECT * FROM wishes;"))
+            rows = [dict(row) for row in result.mappings().all()]
+            return rows
+    except Exception as e:
+        print("DB ERROR:", e)
+        return []
+    
+async def del_wish(wish_id: int):
+    try:
+        async with engine.connect() as conn:
+            result = await conn.execute(text("SELECT * FROM wishes WHERE id = :id"), 
+                                        {"id": wish_id})
+            wish = result.mappings().first()
+            if not wish: 
+                return None
+            await conn.execute(text("DELETE FROM wishes WHERE id = :id"), 
+                               {"id": wish_id})
+            await conn.commit()
+            return {"success": True, "wish_id": wish_id}
+    except Exception as e:
+        print("DB ERROR:", e)
+        return []
