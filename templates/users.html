@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Дашборд расходов</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 5px;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px;
+    }
+    th {
+      background-color: #f0f0f0;
+      font-weight: normal;
+    }
+    tr:nth-child(even) {
+      background-color: #fafafa;
+    }
+    canvas {
+      width: 100% !important;
+      height: 300px !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Дашборд расходов</h1>
+      <p>Обзор текущих и прошлых трат</p>
+    </header>
+
+    <!-- Первый блок: таблица транзакций -->
+    <section class="card">
+      <h2>Статистика трат за текущий месяц</h2>
+      <table id="transactions-table">
+        <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Категория</th>
+            <th>Сумма</th>
+            <th>Комментарий</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for elem in spending %}
+          <tr>
+              <td>{{ elem.data_time }}</td>
+              <td>{{ elem.category }}</td>
+              <td>{{ elem.expense }}</td>
+              <td>{{ elem.comment }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Второй блок: график текущего месяца -->
+    <section class="card">
+      <h2>График трат за текущий месяц</h2>
+      <canvas id="currentMonthChart"></canvas>
+    </section>
+
+    <!-- Третий блок: график по предыдущим месяцам -->
+    <section class="card">
+      <h2>График трат за предыдущие месяцы</h2>
+      <canvas id="monthlyChart"></canvas>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+  // Данные, переданные из FastAPI
+  const categories = JSON.parse('{{ table | tojson | safe }}');
+  console.log("Categories:", categories);
+
+  // График текущего месяца
+  const ctx1 = document.getElementById('currentMonthChart').getContext('2d');
+  new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: categories.map(c => c.category),
+      datasets: [
+        { 
+          label: 'Остаток', 
+          data: categories.map(c => Math.max(c.spent, 0)), // если отрицательное — 0
+          backgroundColor: '#8884d8' 
+        },
+        { 
+          label: 'Запланировано', 
+          data: categories.map(c => c.plan),
+          backgroundColor: '#82ca9d' 
+        },
+        { 
+          label: 'Потрачено', 
+          data: categories.map(c => Math.max(c.remaining, 0)), // если отрицательное — 0
+          backgroundColor: '#7d2c1f' 
+        }
+      ]
+    },
+    options: { 
+      responsive: true, 
+      plugins: { 
+        legend: { position: 'bottom' } 
+      },
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+</script>
+</body>
+</html>

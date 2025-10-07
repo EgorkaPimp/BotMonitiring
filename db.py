@@ -73,3 +73,52 @@ async def del_wish(wish_id: int):
     except Exception as e:
         print("DB ERROR:", e)
         return []
+    
+async def get_every_waste():
+    try:
+        async with engine.connect() as conn:
+            result = await conn.execute(text("SELECT * FROM every_waste;"))
+            rows = [dict(row) for row in result.mappings().all()]
+            return rows
+    except Exception as e:
+        print("DB ERROR:", e)
+        return []
+    
+
+async def get_table():
+    try:
+        async with engine.connect() as conn:
+            # Получаем все расходы
+            expenses_result = await conn.execute(text("SELECT category, amount_expenses FROM expenses;"))
+            expenses_rows = expenses_result.mappings().all()
+
+            # Превращаем в словарь {category: amount_expenses}
+            expenses = {e["category"]: e["amount_expenses"] for e in expenses_rows}
+
+            # Получаем все планы
+            plans_result = await conn.execute(text("SELECT category, amount_money FROM plan_spending;"))
+            plans_rows = plans_result.mappings().all()
+
+            # Превращаем в словарь {category: amount_money}
+            plans = {p["category"]: p["amount_money"] for p in plans_rows}
+
+            # Формируем итоговый список
+            comparison = []
+            all_categories = set(expenses.keys()) | set(plans.keys())
+
+            for cat in all_categories:
+                spent = expenses.get(cat, 0)
+                plan = plans.get(cat, 0)
+                remaining = plan - spent
+                comparison.append({
+                    "category": cat,
+                    "spent": spent,
+                    "plan": plan,
+                    "remaining": remaining
+                })
+
+            return comparison
+
+    except Exception as e:
+        print("DB ERROR:", e)
+        return []
