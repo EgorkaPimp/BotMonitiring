@@ -3,6 +3,8 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from db import get_active_users, get_expenses, get_expense_counts, get_wish, del_wish, get_every_waste, get_table
 from auth import authenticate
+import json
+from pathlib import Path
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -38,9 +40,24 @@ async def delete_wish(wish_id: int):
 async def tests(request: Request):
     spending = await get_every_waste()
     table = await get_table()
-    
+
+    json_path = Path.home() / "SmartBudge_bot" / "json" / "report_933194755_2025-10-14.json"
+    with open(json_path, encoding="utf-8") as f:
+        report = json.load(f)
+
+    # Извлекаем данные для графика
+    monthly_data = [
+        {
+            "category": c["name"],
+            "planned": c["planned"],
+            "spent": c["spent"]
+        }
+        for c in report["budget"]["categories"]
+    ]
+
     return templates.TemplateResponse("users.html", {
         "request": request,
         "spending": spending,
-        "table": table
-        })
+        "table": table,
+        "monthly_data": monthly_data
+    })

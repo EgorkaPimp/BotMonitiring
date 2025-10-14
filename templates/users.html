@@ -97,13 +97,18 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Построение графика на текущей месяц -->
   <script>
-  // Данные, переданные из FastAPI
   const categories = JSON.parse('{{ table | tojson | safe }}');
   console.log("Categories:", categories);
 
-  // График текущего месяца
-  const ctx1 = document.getElementById('currentMonthChart').getContext('2d');
+  Chart.defaults.devicePixelRatio = window.devicePixelRatio;
+
+  const canvas = document.getElementById('currentMonthChart');
+  
+  const ctx1 = canvas.getContext('2d');
+
   new Chart(ctx1, {
     type: 'bar',
     data: {
@@ -111,7 +116,7 @@
       datasets: [
         { 
           label: 'Остаток', 
-          data: categories.map(c => Math.max(c.spent, 0)), // если отрицательное — 0
+          data: categories.map(c => Math.max(c.spent, 0)),
           backgroundColor: '#8884d8' 
         },
         { 
@@ -121,15 +126,62 @@
         },
         { 
           label: 'Потрачено', 
-          data: categories.map(c => Math.max(c.remaining, 0)), // если отрицательное — 0
+          data: categories.map(c => Math.max(c.remaining, 0)),
           backgroundColor: '#7d2c1f' 
         }
       ]
     },
     options: { 
       responsive: true, 
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index', 
+        intersect: false 
+      },
       plugins: { 
-        legend: { position: 'bottom' } 
+        legend: { position: 'bottom' },
+        tooltip: {
+          enabled: true,
+          mode: 'index',
+          intersect: false
+        }
+      },
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+</script>
+<script>
+  const monthlyData = JSON.parse('{{ monthly_data | tojson | safe }}');
+  console.log("Monthly data:", monthlyData);
+
+  const ctx2 = document.getElementById('monthlyChart').getContext('2d');
+
+  new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: monthlyData.map(c => c.category),
+      datasets: [
+        {
+          label: 'Запланировано',
+          data: monthlyData.map(c => c.planned),
+          backgroundColor: '#82ca9d'
+        },
+        {
+          label: 'Потрачено',
+          data: monthlyData.map(c => Math.max(c.spent, 0)),
+          backgroundColor: '#7d2c1f'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { mode: 'index', intersect: false }
       },
       scales: {
         y: { beginAtZero: true }
