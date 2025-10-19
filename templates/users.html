@@ -212,6 +212,7 @@
       <canvas id="currentMonthChart"></canvas>
     </section>
 
+    {% if reports %}
     <!-- Третий блок: график по предыдущим месяцам -->
     <section class="card">
       <h2>
@@ -227,6 +228,8 @@
         <button id="nextBtn" class="nav-btn">❯</button>
       </div>
     </section>
+    {% endif %}
+
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -256,80 +259,69 @@
     });
   </script>
 
+  {% if reports %}
   <!-- График по предыдущим месяцам -->
   <script>
     const reports = JSON.parse('{{ reports | tojson | safe }}');
-    let currentIndex = 0;
-    const ctx2 = document.getElementById('monthlyChart').getContext('2d');
-    let chartInstance;
+    if (reports.length > 0) {
+      let currentIndex = 0;
+      const ctx2 = document.getElementById('monthlyChart').getContext('2d');
+      let chartInstance;
 
-    function renderChart(index) {
-      const report = reports[index];
-      const labels = report.data.map(c => c.category);
-      const planned = report.data.map(c => c.planned);
-      const spent = report.data.map(c => c.spent);
+      function renderChart(index) {
+        const report = reports[index];
+        const labels = report.data.map(c => c.category);
+        const planned = report.data.map(c => c.planned);
+        const spent = report.data.map(c => c.spent);
 
-      document.getElementById('reportDate').textContent = `(${report.date})`;
+        document.getElementById('reportDate').textContent = `(${report.date})`;
 
-      if (chartInstance) chartInstance.destroy();
+        if (chartInstance) chartInstance.destroy();
 
-      chartInstance = new Chart(ctx2, {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [
-            { label: 'Запланировано', data: planned, backgroundColor: '#82ca9d' },
-            { label: 'Потрачено', data: spent, backgroundColor: '#7d2c1f' }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'bottom' },
-            tooltip: { mode: 'index', intersect: false }
+        chartInstance = new Chart(ctx2, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [
+              { label: 'Запланировано', data: planned, backgroundColor: '#82ca9d' },
+              { label: 'Потрачено', data: spent, backgroundColor: '#7d2c1f' }
+            ]
           },
-          scales: { y: { beginAtZero: true } }
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' }, tooltip: { mode: 'index', intersect: false } },
+            scales: { y: { beginAtZero: true } }
+          }
+        });
+
+        document.getElementById('prevBtn').disabled = index >= reports.length - 1;
+        document.getElementById('nextBtn').disabled = index <= 0;
+      }
+
+      document.getElementById('prevBtn').addEventListener('click', () => {
+        if (currentIndex < reports.length - 1) { currentIndex++; renderChart(currentIndex); }
+      });
+      document.getElementById('nextBtn').addEventListener('click', () => {
+        if (currentIndex > 0) { currentIndex--; renderChart(currentIndex); }
+      });
+
+      // Свайп для телефонов
+      let startX = 0;
+      const chartWrapper = document.querySelector('.chart-wrapper');
+      chartWrapper.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+      chartWrapper.addEventListener('touchend', e => {
+        const diff = startX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) {
+          if (diff > 0 && currentIndex < reports.length - 1) { currentIndex++; renderChart(currentIndex); }
+          else if (diff < 0 && currentIndex > 0) { currentIndex--; renderChart(currentIndex); }
         }
       });
 
-      document.getElementById('prevBtn').disabled = index >= reports.length - 1;
-      document.getElementById('nextBtn').disabled = index <= 0;
+      renderChart(currentIndex);
     }
-
-    document.getElementById('prevBtn').addEventListener('click', () => {
-      if (currentIndex < reports.length - 1) {
-        currentIndex++;
-        renderChart(currentIndex);
-      }
-    });
-
-    document.getElementById('nextBtn').addEventListener('click', () => {
-      if (currentIndex > 0) {
-        currentIndex--;
-        renderChart(currentIndex);
-      }
-    });
-
-    // Свайп для телефонов
-    let startX = 0;
-    const chartWrapper = document.querySelector('.chart-wrapper');
-
-    chartWrapper.addEventListener('touchstart', e => startX = e.touches[0].clientX);
-    chartWrapper.addEventListener('touchend', e => {
-      const diff = startX - e.changedTouches[0].clientX;
-      if (Math.abs(diff) > 50) {
-        if (diff > 0 && currentIndex < reports.length - 1) {
-          currentIndex++;
-          renderChart(currentIndex);
-        } else if (diff < 0 && currentIndex > 0) {
-          currentIndex--;
-          renderChart(currentIndex);
-        }
-      }
-    });
-
-    renderChart(currentIndex);
   </script>
+  {% endif %}
+
 </body>
 </html>

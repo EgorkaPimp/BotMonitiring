@@ -43,48 +43,48 @@ async def budget_dashboard(request: Request, user_id: int):
     spending = await get_every_waste(user_id)
     table = await get_table(user_id)
 
-    json_dir = Path.home() / "SmartBudge_bot" / "json"
+    json_dir = Path.home() / "my_bot" / "SmartBudge_bot" / "json"
     pattern = f"report_{user_id}_*.json"
     files = list(json_dir.glob(pattern))
 
-    if not files:
-        return JSONResponse({"error": "Нет отчётов для пользователя"}, status_code=404)
-
-    # Извлекаем дату из имени
-    def extract_date(path: Path):
-        match = re.search(rf"report_{user_id}_(\d{{4}}-\d{{2}}-\d{{2}})\.json", path.name)
-        if match:
-            try:
-                return datetime.date.fromisoformat(match.group(1))
-            except ValueError:
-                return datetime.date.min
-        return datetime.date.min
-
-    # Сортируем файлы (новые первыми)
-    files.sort(key=extract_date, reverse=True)
-
-    # Собираем данные по каждому отчёту
     reports = []
-    for f in files:
-        with open(f, encoding="utf-8") as json_file:
-            report = json.load(json_file)
-        date_str = extract_date(f).strftime("%Y-%m-%d")
-        monthly_data = [
-            {
-                "category": c["name"],
-                "planned": c["planned"],
-                "spent": c["spent"]
-            }
-            for c in report["budget"]["categories"]
-        ]
-        reports.append({
-            "date": date_str,
-            "data": monthly_data
-        })
 
+    if files:
+        # Извлекаем дату из имени
+        def extract_date(path: Path):
+            match = re.search(rf"report_{user_id}_(\d{{4}}-\d{{2}}-\d{{2}})\.json", path.name)
+            if match:
+                try:
+                    return datetime.date.fromisoformat(match.group(1))
+                except ValueError:
+                    return datetime.date.min
+            return datetime.date.min
+
+        # Сортируем файлы (новые первыми)
+        files.sort(key=extract_date, reverse=True)
+
+        # Собираем данные по каждому отчёту
+        for f in files:
+            with open(f, encoding="utf-8") as json_file:
+                report = json.load(json_file)
+            date_str = extract_date(f).strftime("%Y-%m-%d")
+            monthly_data = [
+                {
+                    "category": c["name"],
+                    "planned": c["planned"],
+                    "spent": c["spent"]
+                }
+                for c in report["budget"]["categories"]
+            ]
+            reports.append({
+                "date": date_str,
+                "data": monthly_data
+            })
+
+    # Возвращаем шаблон всегда, даже если reports пустой
     return templates.TemplateResponse("users.html", {
         "request": request,
         "spending": spending,
         "table": table,
-        "reports": reports  # список всех json'ов
+        "reports": reports  # список всех json'ов, может быть пустым
     })
