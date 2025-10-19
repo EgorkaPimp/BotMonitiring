@@ -74,10 +74,11 @@ async def del_wish(wish_id: int):
         print("DB ERROR:", e)
         return []
     
-async def get_every_waste():
+async def get_every_waste(user_id: int):
     try:
         async with engine.connect() as conn:
-            result = await conn.execute(text("SELECT * FROM every_waste;"))
+            result = await conn.execute(text("SELECT * FROM every_waste WHERE user_id = :user_id"),
+                                        {"user_id": user_id})
             rows = [dict(row) for row in result.mappings().all()]
             return rows
     except Exception as e:
@@ -85,18 +86,20 @@ async def get_every_waste():
         return []
     
 
-async def get_table():
+async def get_table(user_id: int):
     try:
         async with engine.connect() as conn:
             # Получаем все расходы
-            expenses_result = await conn.execute(text("SELECT category, amount_expenses FROM expenses;"))
+            expenses_result = await conn.execute(text("SELECT category, amount_expenses FROM expenses WHERE user_id = :user_id"),
+                                                 {"user_id": user_id})
             expenses_rows = expenses_result.mappings().all()
 
             # Превращаем в словарь {category: amount_expenses}
             expenses = {e["category"]: e["amount_expenses"] for e in expenses_rows}
 
             # Получаем все планы
-            plans_result = await conn.execute(text("SELECT category, amount_money FROM plan_spending;"))
+            plans_result = await conn.execute(text("SELECT category, amount_money FROM plan_spending WHERE user_id = :user_id"),
+                                              {"user_id": user_id})
             plans_rows = plans_result.mappings().all()
 
             # Превращаем в словарь {category: amount_money}
